@@ -3,40 +3,24 @@
 
 PKG             := stimfit
 $(PKG)_IGNORE   := 
-$(PKG)_VERSION  := 0.16.2macports
-$(PKG)_CHECKSUM := 0c58f51e20c4253dee66be6cf0249ece4c806aa7dc3ae0934f6f3693c43577e7
+$(PKG)_CHECKSUM := 61d3cbf049468b6a714acc5a6f451945c9d3f0a8
 $(PKG)_SUBDIR   := stimfit-$($(PKG)_VERSION)
 $(PKG)_FILE     := stimfit-$($(PKG)_VERSION).tar.gz
-$(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/refs/tags/v$($(PKG)_VERSION).tar.gz
-$(PKG)_DEPS     := cc biosig wxwidgets hdf5 fftw levmar lapack
+$(PKG)_URL      := https://stimfit.googlecode.com/files/$($(PKG)_FILE)
+$(PKG)_DEPS     := gcc libbiosig wxwidgets hdf5 boost fftw
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/tags' | \
-    $(SED) -n 's_.*<a href="/neurodroid/stimfit/tags/\(0.[0-9\.]*\.*).tar.gz" rel="nofollow">.*_\1_ip' \
-    head -1
+#    wget -q -O- 'http://biosig.sourceforge.net/download.html' | \
+#    $(SED) -n 's_.*>libbiosig, version \([0-9]\.[0-9]\.[0-9]\).*tar.gz_\1_ip' | \
+     (cd $(HOME)/src/stimfit/ && git log | head -1)
 endef
 
 define $(PKG)_BUILD
 
-    cd '$(1)' && ./autogen.sh && CPPFLAGS="-std=gnu++17" \
-	./configure --disable-python --with-biosig --with-pslope \
-		--with-hdf5-prefix=$(PREFIX)/$(TARGET) \
-		--with-wx-config=$(PREFIX)/$(TARGET)/bin/wx-config \
-		--with-sysroot=$(PREFIX)/$(TARGET)/bin \
-		--host='$(TARGET)' \
-		--build="`config.guess`" \
-		--prefix='$(PREFIX)/$(TARGET)' \
-		--enable-static \
-		--disable-shared
+    ## The patch did not apply cleanly, so -DWITH_HDF4 needs to be defined	
+    WXCONF='$(PREFIX)/bin/$(TARGET)-wx-config' $(MAKE) -C '$(1)' -f Makefile.static -j '$(JOBS)'
 
-    CXX='$(PREFIX)/bin/$(TARGET)-g++' \
-	CC='$(PREFIX)/bin/$(TARGET)-gcc' \
-	PKGCONF='$(PREFIX)/bin/$(TARGET)-pkg-config' \
-	WXCONF='$(PREFIX)/$(TARGET)/bin/wx-config' \
-	CROSS='$(PREFIX)/$(TARGET)/bin/' \
-	$(MAKE) -C '$(1)' -f Makefile.static -j '$(JOBS)'
-
-    $(INSTALL) '$(1)/stimfit.exe' '$(PREFIX)/$(TARGET)/bin/'
+    $(INSTALL) -m644 '$(1)/stimfit.exe' '$(PREFIX)/$(TARGET)/bin/'
 
 endef
 
