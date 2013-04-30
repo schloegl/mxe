@@ -2,22 +2,25 @@
 # See index.html for further information.
 
 PKG             := edfbrowser
-$(PKG)_WEBSITE  := https://www.teuniz.net/edfbrowser/
-$(PKG)_DESCR    := EDFbrowser
 $(PKG)_IGNORE   := 
-$(PKG)_VERSION  := 2.03
-$(PKG)_CHECKSUM := 5bcd059dc493a713e468e2d80961f4b6802009f0c3a9cf55edf65965487f04a4
-$(PKG)_SUBDIR   := edfbrowser_203_source
+$(PKG)_CHECKSUM := 1805c78ab511822baa5e62beed0cf07cd46c8d51
+$(PKG)_SUBDIR   := edfbrowser_150_source
 $(PKG)_FILE     := $($(PKG)_SUBDIR).tar.gz
-$(PKG)_URL      := https://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
-                   https://gitlab.com/Teuniz/EDFbrowser/releases
-$(PKG)_GH_CONF  := Teuniz/EDFbrowser/releases v
-$(PKG)_QT_DIR   := qt5
-$(PKG)_DEPS     := cc qtbase
+$(PKG)_URL      := http://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
+$(PKG)_DEPS     := gcc qt
+
+define $(PKG)_UPDATE
+#    wget -q -O- 'http://biosig.sourceforge.net/download.html' | \
+#    $(SED) -n 's_.*>libbiosig, version \([0-9]\.[0-9]\.[0-9]\).*tar.gz_\1_ip' | \
+    head -1
+endef
 
 define $(PKG)_BUILD
 
-    cd '$(1)' && $(PREFIX)/$(TARGET)/$($(PKG)_QT_DIR)/bin/qmake
+    #rm -rf '$(1)'
+    #cp -rL ~/src/EDFbrowser '$(1)'
+
+    cd '$(1)' && $(PREFIX)/$(TARGET)/qt/bin/qmake 
 
     $(MAKE) -C '$(1)'
     
