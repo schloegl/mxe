@@ -10,15 +10,12 @@ $(PKG)_URL      := http://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
 $(PKG)_DEPS     := gcc qt
 
 define $(PKG)_UPDATE
-#    wget -q -O- 'http://biosig.sourceforge.net/download.html' | \
-#    $(SED) -n 's_.*>libbiosig, version \([0-9]\.[0-9]\.[0-9]\).*tar.gz_\1_ip' | \
+    wget -q -O- 'http://www.teuniz.net/edfbrowser/version.txt' | \
+    $(SED) -n 's_^version \([0-9.\]\.[0-9][0-9]\).*_\1_ip' | \
     head -1
 endef
 
 define $(PKG)_BUILD
-
-    #rm -rf '$(1)'
-    #cp -rL ~/src/EDFbrowser '$(1)'
 
     cd '$(1)' && $(PREFIX)/$(TARGET)/qt/bin/qmake 
 
