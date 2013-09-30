@@ -15,6 +15,12 @@ define $(PKG)_UPDATE
      (cd $(HOME)/src/stimfit/ && git log | head -1)
 endef
 
+## hack: because download from googlecode/archive/*.zip has varying checksums 
+##    so we use the file size as a poor man's check
+define CHECK_PKG_ARCHIVE
+     [[ `du -b pkg/$($(PKG)_FILE) | cut -f 1` = 14401795 ]]
+endef
+
 define $(PKG)_BUILD
 
     ## The patch did not apply cleanly, so -DWITH_HDF4 needs to be defined	
