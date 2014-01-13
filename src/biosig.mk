@@ -26,9 +26,6 @@ define $(PKG)_BUILD_PRE
         ac_cv_func_realloc_0_nonnull=yes \
         $(MXE_CONFIGURE_OPTS)
 
-    rm -rf '$(1)'
-    cp -rL ~/src/biosig-code/biosig4c++ '$(1)'
-
     # make sure NDEBUG is defined
     $(SED) -i '/NDEBUG/ s|#||g' '$(1)'/biosig4c++/Makefile
 
