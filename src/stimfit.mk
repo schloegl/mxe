@@ -10,15 +10,9 @@ $(PKG)_URL      := https://stimfit.googlecode.com/files/$($(PKG)_FILE)
 $(PKG)_DEPS     := gcc libbiosig wxwidgets hdf5 boost fftw
 
 define $(PKG)_UPDATE
-#    wget -q -O- 'http://biosig.sourceforge.net/download.html' | \
-#    $(SED) -n 's_.*>libbiosig, version \([0-9]\.[0-9]\.[0-9]\).*tar.gz_\1_ip' | \
-     (cd $(HOME)/src/stimfit/ && git log | head -1)
-endef
-
-## hack: because download from googlecode/archive/*.zip has varying checksums 
-##    so we use the file size as a poor man's check
-define CHECK_PKG_ARCHIVE
-     [[ `du -b pkg/$($(PKG)_FILE) | cut -f 1` = 14401795 ]]
+    wget -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
+    $(SED) -n 's_.*<a href="/neurodroid/stimfit/tree/\([0-9\.]*\)\.tar\.gz.*_\1_ip' | \
+    head -1
 endef
 
 define $(PKG)_BUILD
