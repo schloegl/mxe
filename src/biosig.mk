@@ -105,12 +105,6 @@ define $(PKG)_BUILD_POST
 
     cd '$(1)/biosig4c++/win32' && zip $(PREFIX)/$($(PKG)_SUBDIR).$(TARGET).zip *.bat README
 
-    #exit -1
-    ### these cause problems when compiling stimfit
-    #rm -rf '$(PREFIX)/$(TARGET)/lib/libphysicalunits.dll.a' \
-    #	'$(PREFIX)/$(TARGET)/lib/libbiosig.dll.a' \
-    #	'$(PREFIX)/$(TARGET)/lib/libgdf.dll.a'
-
 endef
 
 
@@ -122,13 +116,13 @@ endef
 
 define $(PKG)_BUILD_i686-w64-mingw32
 	$($(PKG)_BUILD_PRE)
-	#TARGET=$(TARGET) $(MAKE) -C '$(1)' mexw32
+	# TARGET=$(TARGET) $(MAKE) -C '$(1)' mexw32 
 	$($(PKG)_BUILD_POST)
 endef
 
 define $(PKG)_BUILD_x86_64-w64-mingw32
 	$($(PKG)_BUILD_PRE)
-	#TARGET=$(TARGET) $(MAKE) -C '$(1)' mexw64
+	# TARGET=$(TARGET) $(MAKE) -C '$(1)' mexw64 
 	$($(PKG)_BUILD_POST)
 endef
 
