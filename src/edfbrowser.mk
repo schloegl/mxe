@@ -6,7 +6,7 @@ $(PKG)_IGNORE   :=
 $(PKG)_CHECKSUM := 1805c78ab511822baa5e62beed0cf07cd46c8d51
 $(PKG)_SUBDIR   := edfbrowser_150_source
 $(PKG)_FILE     := $($(PKG)_SUBDIR).tar.gz
-$(PKG)_URL      := http://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
+$(PKG)_URL      := https://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
 $(PKG)_DEPS     := gcc qt
 
 define $(PKG)_UPDATE
