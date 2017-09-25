@@ -2,18 +2,17 @@
 # See index.html for further information.
 
 PKG             := edfbrowser
+$(PKG)_WEBSITE  := https://www.teuniz.net/edfbrowser/
+$(PKG)_DESCR    := EDFbrowser
 $(PKG)_IGNORE   := 
 $(PKG)_CHECKSUM := 1805c78ab511822baa5e62beed0cf07cd46c8d51
 $(PKG)_SUBDIR   := edfbrowser_150_source
 $(PKG)_FILE     := $($(PKG)_SUBDIR).tar.gz
-$(PKG)_URL      := https://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
+$(PKG)_URL      := https://github.com/Teuniz/EDFbrowser/releases
+                   https://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
+$(PKG)_GH_CONF  := Teuniz/EDFbrowser/releases v
 $(PKG)_DEPS     := gcc qt
 
-define $(PKG)_UPDATE
-    wget -q -O- 'http://www.teuniz.net/edfbrowser/version.txt' | \
-    $(SED) -n 's_^version \([0-9.\]\.[0-9][0-9]\).*_\1_ip' | \
-    head -1
-endef
 
 define $(PKG)_BUILD
 
