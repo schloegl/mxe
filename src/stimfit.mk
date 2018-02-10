@@ -13,8 +13,8 @@ $(PKG)_DEPS     := gcc biosig wxwidgets hdf5 boost fftw
 
 define $(PKG)_UPDATE
     wget -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
-	sed -n 's_.*<a href="/neurodroid/stimfit/archive/\([0-9\.]*\)windows.tar.gz" rel="nofollow">.*_\1_ip' \
-	head -1
+    $(SED) -n 's_.*<a href="/neurodroid/stimfit/tree/\([0-9\.]*\)\.tar\.gz.*_\1_ip' | \
+    head -1
 endef
 
 define $(PKG)_BUILD
