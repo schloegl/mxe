@@ -11,12 +11,13 @@ $(PKG)_FILE     := $($(PKG)_SUBDIR).tar.gz
 $(PKG)_URL      := https://github.com/Teuniz/EDFbrowser/releases
                    https://www.teuniz.net/edfbrowser/$($(PKG)_FILE)
 $(PKG)_GH_CONF  := Teuniz/EDFbrowser/releases v
-$(PKG)_DEPS     := gcc qt
+$(PKG)_QT_DIR   := qt5
+$(PKG)_DEPS     := cc qtbase
 
 
 define $(PKG)_BUILD
 
-    cd '$(1)' && $(PREFIX)/$(TARGET)/qt/bin/qmake 
+    cd '$(1)' && $(PREFIX)/$(TARGET)/$($(PKG)_QT_DIR)/bin/qmake
 
     $(MAKE) -C '$(1)'
     
