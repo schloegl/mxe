@@ -12,8 +12,8 @@ $(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/refs/tags/v$($(
 $(PKG)_DEPS     := gcc biosig wxwidgets hdf5 boost fftw
 
 define $(PKG)_UPDATE
-    wget -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
-    $(SED) -n 's_.*<a href="/neurodroid/stimfit/tree/\([0-9\.]*\)\.tar\.gz.*_\1_ip' | \
+    $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
+    $(SED) -n 's_.*<a href="/neurodroid/stimfit/archive/\([0-9\.]*\)windows.tar.gz" rel="nofollow">.*_\1_ip' \
     head -1
 endef
 
@@ -23,6 +23,10 @@ define $(PKG)_BUILD
     WXCONF='$(PREFIX)/bin/$(TARGET)-wx-config' $(MAKE) -C '$(1)' -f Makefile.static -j '$(JOBS)'
 
     $(INSTALL) -m644 '$(1)/stimfit.exe' '$(PREFIX)/$(TARGET)/bin/'
+
+   -$(INSTALL) '$(1)'/stimfit.exe /fs3/group/jonasgrp/Software/Stimfit/stimfit.$(TARGET).$(shell date +%Y%m%d).exe
+
+   -(cd /fs3/group/jonasgrp/Software/Stimfit/ && ln sf stimfit.$(TARGET).$(shell date +%Y%m%d).exe stimfit.$(TARGET).LATEST.exe)
 
 endef
 
