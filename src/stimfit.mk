@@ -24,9 +24,5 @@ define $(PKG)_BUILD
 
     $(INSTALL) -m644 '$(1)/stimfit.exe' '$(PREFIX)/$(TARGET)/bin/'
 
-   -$(INSTALL) '$(1)'/stimfit.exe /fs3/group/jonasgrp/Software/Stimfit/stimfit.$(TARGET).$(shell date +%Y%m%d).exe
-
-   -(cd /fs3/group/jonasgrp/Software/Stimfit/ && ln sf stimfit.$(TARGET).$(shell date +%Y%m%d).exe stimfit.$(TARGET).LATEST.exe)
-
 endef
 
