@@ -14,7 +14,6 @@ $(PKG)_GH_CONF  := Teuniz/EDFbrowser/releases v
 $(PKG)_QT_DIR   := qt5
 $(PKG)_DEPS     := cc qtbase
 
-
 define $(PKG)_BUILD
 
     cd '$(1)' && $(PREFIX)/$(TARGET)/$($(PKG)_QT_DIR)/bin/qmake
