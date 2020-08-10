@@ -18,13 +18,9 @@ endef
 
 define $(PKG)_BUILD
     # This can be removed once the patch "graphicsmagick-1-fix-xml2-config.patch" is accepted by upstream
-    cd '$(1)' && autoconf
-    cd '$(1)' && ./configure \
-        $(HOST_AND_BUILD_CONFIGURE_OPTIONS) \
-        $(ENABLE_SHARED_OR_STATIC) \
-         $(CONFIGURE_CPPFLAGS) $(CONFIGURE_LDFLAGS) \
-        --prefix='$(PREFIX)/$(TARGET)' \
-        --disable-openmp \
+    cd '$(SOURCE_DIR)' && autoconf
+    cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
+         $(MXE_CONFIGURE_OPTS) \
         --without-modules \
         --with-threads \
         --with-magick-plus-plus \
@@ -48,9 +44,10 @@ define $(PKG)_BUILD
        --with-quantum-depth=16 \
         ac_cv_prog_xml2_config='$(PREFIX)/$(TARGET)/bin/xml2-config' \
         ac_cv_path_xml2_config='$(PREFIX)/$(TARGET)/bin/xml2-config' \
-
-    $(MAKE) -C '$(1)' -j '$(JOBS)' bin_PROGRAMS=
-    $(MAKE) -C '$(1)' -j 1 install bin_PROGRAMS= DESTDIR='$(3)'
+        LIBS='-lgomp -fopenmp' \
+        $(PKG_CONFIGURE_OPTS)
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' bin_PROGRAMS=
+    $(MAKE) -C '$(BUILD_DIR)' -j 1 install bin_PROGRAMS=
 
     if [ "$(ENABLE_DEP_DOCS)" == "no" ]; then \
       rm -rf "$(3)$(PREFIX)/$(TARGET)/share/doc/GraphicsMagick"; \
