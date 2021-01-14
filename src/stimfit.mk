@@ -3,12 +3,13 @@
 
 PKG             := stimfit
 $(PKG)_IGNORE   := 
-$(PKG)_VERSION  := 0.15.8
-$(PKG)_CHECKSUM := 8a5330612245d3f442ed640b0df91028aa4798301bb6844eaf1cf9b463dfc466
-$(PKG)_SUBDIR   := stimfit-$($(PKG)_VERSION)windows
-$(PKG)_FILE     := stimfit-$($(PKG)_VERSION)windows.tar.gz
-$(PKG)_URL      := https://github.com/neurodroid/$(PKG)/archive/v$($(PKG)_VERSION)windows.tar.gz
-$(PKG)_DEPS     := cc biosig wxwidgets hdf5 tinyxml fftw levmar openblas
+$(PKG)_VERSION  := 0.16.0
+$(PKG)_CHECKSUM := 17e014e555fcafc6ce08fc72bcceb1786b367e0c447e847c0e72e99845fc503c
+$(PKG)_SUBDIR   := stimfit-$($(PKG)_VERSION)debian
+$(PKG)_FILE     := stimfit-$($(PKG)_VERSION)debian.tar.gz
+$(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/v0.16.0debian.tar.gz
+# https://github.com/neurodroid/$(PKG)/archive/v$($(PKG)_VERSION)windows.tar.gz
+$(PKG)_DEPS     := cc biosig wxwidgets hdf5 boost fftw levmar openblas
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
@@ -17,10 +18,6 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD
-
-    #rm -rf '$(1)'
-    #rsync -avL  ~/src/stimfit/* '$(1)/'
-    #git clone ~/src/stimfit '$(1)'
 
     cd '$(1)' && ./autogen.sh && CPPFLAGS="-std=gnu++17" \
 	./configure --disable-python --with-biosig2 --with-pslope \
@@ -38,7 +35,7 @@ define $(PKG)_BUILD
 	PKGCONF='$(PREFIX)/bin/$(TARGET)-pkg-config' \
 	WXCONF='$(PREFIX)/$(TARGET)/bin/wx-config' \
 	CROSS='$(PREFIX)/$(TARGET)/bin/' \
-	make -C '$(1)' -f Makefile.static -j '$(JOBS)'
+	$(MAKE) -C '$(1)' -f Makefile.static -j '$(JOBS)'
 
     $(INSTALL) '$(1)/stimfit.exe' '$(PREFIX)/$(TARGET)/bin/'
 
