@@ -3,8 +3,8 @@
 PKG             := file
 $(PKG)_WEBSITE  := https://www.darwinsys.com/file/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 5.32
-$(PKG)_CHECKSUM := 8639dc4d1b21e232285cd483604afc4a6ee810710e00e579dbe9591681722b50
+$(PKG)_VERSION  := 5.40
+$(PKG)_CHECKSUM := 167321f43c148a553f68a0ea7f579821ef3b11c27b8cbe158e4df897e4a5dd57
 $(PKG)_SUBDIR   := file-$($(PKG)_VERSION)
 $(PKG)_FILE     := file-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://astron.com/pub/file/$($(PKG)_FILE)
@@ -28,7 +28,7 @@ define $(PKG)_BUILD
     cp -Rp '$(1)' '$(1).native'
     cd '$(1).native' && ./configure \
         --disable-shared
-    $(MAKE) -C '$(1).native/src' -j '$(JOBS)' file
+    $(MAKE) -C '$(1).native/src' -j '$(JOBS)'
 
     cd '$(1)' && ./configure \
         $(MXE_CONFIGURE_OPTS) \

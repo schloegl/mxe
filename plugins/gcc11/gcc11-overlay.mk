@@ -26,21 +26,24 @@ $(PKG)_URL      := https://isl.gforge.inria.fr/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://gcc.gnu.org/pub/gcc/infrastructure/$($(PKG)_FILE)
 
 PKG             := gcc
-$(PKG)_VERSION  := 10.3.0
-$(PKG)_CHECKSUM := 64f404c1a650f27fc33da242e1f2df54952e3963a49e06e73f6940f3223ac344
+$(PKG)_VERSION  := 11.1.0
+$(PKG)_CHECKSUM := 4c4a6fb8a8396059241c2e674b85b351c26a5d678274007f076957afa1cc9ddf
 $(PKG)_SUBDIR   := gcc-$($(PKG)_VERSION)
 $(PKG)_FILE     := gcc-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/gcc/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://www.mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc10.patch
+$(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc11.patch
 $(PKG)_DEPS     := binutils mingw-w64 $(addprefix $(BUILD)~,gmp isl mpc mpfr zstd)
 
 _$(PKG)_CONFIGURE_OPTS = --with-zstd='$(PREFIX)/$(BUILD)'
+# workaround from https://bugs.gentoo.org/787662#c4
+# for https://sourceforge.net/p/mingw-w64/bugs/895
+mingw-w64-pthreads_CONFIGURE_OPTS = CFLAGS=-fno-expensive-optimizations
 
-# copy db-2-install-exe.patch to gcc7 plugin when gcc10 is default
+# copy db-2-install-exe.patch to gcc7 plugin when gcc11 is default
 db_PATCHES := $(TOP_DIR)/src/db-1-fix-including-winioctl-h-lowcase.patch
 
-# set these in respective makefiles when gcc10 becomes default
+# set these in respective makefiles when gcc11 becomes default
 # remove from here and leave them blank for gcc5 plugin
 libssh_EXTRA_WARNINGS = -Wno-error=implicit-fallthrough
 gtkimageview_EXTRA_WARNINGS = -Wno-error=misleading-indentation

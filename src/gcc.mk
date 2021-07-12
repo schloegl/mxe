@@ -70,11 +70,11 @@ define $(PKG)_BUILD_mingw-w64
     cd '$(BUILD_DIR).headers' && '$(BUILD_DIR)/$(mingw-w64_SUBDIR)/mingw-w64-headers/configure' \
         --host='$(TARGET)' \
         --prefix='$(PREFIX)/$(TARGET)' \
-        --with-default-msvcrt=msvcrt \
         --enable-sdk=all \
         --enable-idl \
         --enable-secure-api \
         --with-default-msvcrt=msvcrt \
+        --with-default-win32-winnt=0x0600 \
         $(mingw-w64-headers_CONFIGURE_OPTS)
     $(MAKE) -C '$(BUILD_DIR).headers' install
 
@@ -89,6 +89,7 @@ define $(PKG)_BUILD_mingw-w64
         --host='$(TARGET)' \
         --prefix='$(PREFIX)/$(TARGET)' \
         --with-default-msvcrt=msvcrt \
+        --with-default-win32-winnt=0x0600 \
         @gcc-crt-config-opts@ \
         $(mingw-w64-crt_CONFIGURE_OPTS)
     $(MAKE) -C '$(BUILD_DIR).crt' -j '$(JOBS)' || $(MAKE) -C '$(BUILD_DIR).crt' -j '$(JOBS)'
@@ -97,7 +98,8 @@ define $(PKG)_BUILD_mingw-w64
     # build posix threads
     mkdir '$(BUILD_DIR).pthreads'
     cd '$(BUILD_DIR).pthreads' && '$(BUILD_DIR)/$(mingw-w64_SUBDIR)/mingw-w64-libraries/winpthreads/configure' \
-        $(MXE_CONFIGURE_OPTS)
+        $(MXE_CONFIGURE_OPTS) \
+        $(mingw-w64-pthreads_CONFIGURE_OPTS)
     $(MAKE) -C '$(BUILD_DIR).pthreads' -j '$(JOBS)' || $(MAKE) -C '$(BUILD_DIR).pthreads' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR).pthreads' -j 1 $(INSTALL_STRIP_TOOLCHAIN)
 
