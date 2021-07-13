@@ -389,6 +389,7 @@ else
         echo '# This variable controls which plugins are in use.'; \
         echo '# See plugins/README.md for further information.'; \
         echo '#override MXE_PLUGIN_DIRS += plugins/apps plugins/native'; \
+        echo 'override MXE_PLUGIN_DIRS += plugins/gcc10'; \
         echo; \
         echo '# This variable controls the download mirror for SourceForge,'; \
         echo '# when it is used. Enabling the value below means auto.'; \
