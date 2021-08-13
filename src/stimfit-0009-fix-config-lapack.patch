@@ -1,25 +1,272 @@
+diff --git a/Makefile.am b/Makefile.am
+index 865f8c27..96f6071d 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -115,13 +115,9 @@ noinst_HEADERS = \
+ 	./src/test/gtest/include/gtest/internal/gtest-type-util.h \
+ 	./src/test/gtest/src/gtest-internal-inl.h
+ 
+-if WITH_BIOSIG2
+-    noinst_HEADERS += ./src/libstfio/biosig/biosiglib.h
+-else
+ if WITH_BIOSIG
+     noinst_HEADERS += ./src/libstfio/biosig/biosiglib.h
+ endif # WITH_BIOSIG
+-endif # WITH_BIOSIG2
+ 
+ EXTRA_DIST = ./src/stimfit/res/16-em-down.xpm
+ EXTRA_DIST+= ./src/stimfit/res/16-em-open.xpm
+diff --git a/Makefile.static b/Makefile.static
+index ce5c068b..1661a21c 100644
+--- a/Makefile.static
++++ b/Makefile.static
+@@ -35,7 +35,7 @@
+ #    - PYTHON shell, matplotlib (print) are not supported
+ #    - configure not supported
+ #
+-# Copyright (C) 2012,2013,2014,2015 Alois Schloegl
++# Copyright (C) 2012,2013,2014,2015,2021 Alois Schloegl
+ # This is part of the stimfit project http://stimfit.org
+ #
+ ########################################################################
+@@ -50,10 +50,8 @@ ifneq (,$(findstring mingw,$(WXCONF)))
+ endif
+ endif
+ 
+-DEFINES += -DWITH_BIOSIG2
++DEFINES += -DWITH_BIOSIG
+ DEFINES += -DHAVE_LAPACK
+-#DEFINES += -DWITHOUT_ABF
+-#DEFINES += -DWITHOUT_AXG
+ DEFINES += -DWITH_PSLOPE
+ #DEFINES += -DTEST_MINIMAL
+ #DEFINES += -DPYTHON -DWITH_PYTHON
+@@ -66,7 +64,7 @@ WXDIR     = $(dir $(WXCONF))../include/
+ #DEFINES  += -I$(WXDIR)/..
+ 
+ 
+-PY_VERSION := 2.7
++PY_VERSION := $(shell py3versions -i | sed 's/python//g')
+ 
+ 
+ ##############################################################
+@@ -118,6 +116,7 @@ SOURCES = ./src/stimfit/stf.cpp \
+ 	./src/libstfio/stfio.cpp \
+ 	./src/libstfio/igor/WriteWave.c \
+ 	./src/libstfio/igor/CrossPlatformFileIO.c \
++	./src/libstfio/biosig/biosiglib.cpp \
+ 	./src/libstfio/cfs/cfs.c 
+ 
+ SOURCES_OPTIONAL = \
+@@ -178,13 +177,10 @@ ifneq (,$(findstring HAVE_LAPACK, $(DEFINES)))
+   LIBS   += -llapack -lblas
+ endif
+ 
+-ifeq (,$(findstring WITHOUT_ABF, $(DEFINES)))
+-	SOURCES += $(SOURCES_ABF)
+-endif
++# needed because of exportATF
++SOURCES += $(SOURCES_ABF)
++SOURCES += $(SOURCES_AXG)
+ 
+-ifeq (,$(findstring WITHOUT_AXG, $(DEFINES)))
+-	SOURCES += $(SOURCES_AXG)
+-endif
+ 
+ ifeq (,$(findstring mingw, $(WXCONF)))
+   TARGET   = stimfit 
+@@ -208,8 +204,9 @@ ifneq (,$(findstring WITH_PYTHON, $(DEFINES)))
+ endif
+ 
+ 
+-CC       ?= $(shell $(WXCONF) --cc)
+-CXX      ?= $(shell $(WXCONF) --cxx)
++CC        = $(shell $(WXCONF) --cc)
++CXX       = $(shell $(WXCONF) --cxx)
++LD        = $(CXX) #$(shell $(WXCONF) --ld)
+ CFLAGS    = $(DEFINES) $(shell $(WXCONF) --cflags) -fstack-protector -O2
+ CPPFLAGS  = $(DEFINES) $(shell $(WXCONF) --cppflags) -std=gnu++17 -fstack-protector -O2
+ CXXFLAGS  = $(DEFINES) $(shell $(WXCONF) --cxxflags) -std=gnu++17 -fstack-protector -O2
+@@ -262,17 +259,8 @@ endif
+ endif
+ 
+ ## BIOSIG related stuff ##
+-ifneq (,$(findstring WITH_BIOSIG2, $(DEFINES)))
+-  LIBS  += -lbiosig
+-else 
+-  ifneq (,$(findstring WITH_BIOSIG, $(DEFINES)))
+-    LIBS  += -lbiosig
+-  endif
+-endif
+-ifneq (,$(findstring WITH_BIOSIG, $(DEFINES)))
+-    SOURCES += ./src/libstfio/biosig/biosiglib.cpp
+-    LIBS  += $(shell $(PKGCONF) --libs libbiosig)
+-endif
++LIBS  += -lbiosig
++LIBS  += -lbiosig $(shell $(PKGCONF) --libs libbiosig)
+ 
+ LIBS     += -lfftw3
+ 
+@@ -289,7 +277,7 @@ LIBS   += -ltinyxml -lstdc++
+ OBJECTS  = $(addsuffix .$(OBJEXT), $(basename $(SOURCES)))
+ 
+ $(TARGET): $(OBJECTS)
+-	$(CXX) $(OBJECTS) $(CPPFLAGS) $(LDFLAGS) $(LIBS) -o "$@"
++	$(LD) $(OBJECTS) $(CPPFLAGS) $(LDFLAGS) $(LIBS) -o "$@"
+ 
+ %.c: %.h
+ 
 diff --git a/configure.ac b/configure.ac
-index 1f8c58f5..8f70fc5a 100644
+index 6a4ba3f3..6af39beb 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5,6 +5,7 @@ AM_SILENT_RULES([yes])
- AC_CONFIG_MACRO_DIR([m4])
- 
- AC_PROG_CC
-+AC_PROG_CC_STDC
+@@ -1,4 +1,4 @@
+-AC_INIT([stimfit],[0.16.0])
++AC_INIT([stimfit],[0.16.1])
+ AC_CONFIG_SRCDIR(src/stimfit/gui/main.cpp)
+ AM_INIT_AUTOMAKE([1.11])
+ AM_SILENT_RULES([yes])
+@@ -8,8 +8,6 @@ AC_PROG_CC
  AC_PROG_INSTALL
  
  _LT_SET_OPTION([LT_INIT],[dlopen])
-@@ -179,6 +180,8 @@ if test "$LAPACKLIB" = ""; then
+-AC_DIAGNOSE([obsolete],[AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
+-put the `dlopen' option into LT_INIT's first parameter.])
+ 
+ LT_INIT
+ AC_PROG_CPP
+@@ -31,14 +29,14 @@ AC_ARG_ENABLE([debian], AS_HELP_STRING([--enable-debian],[special build for pbui
+ AM_CONDITIONAL(BUILD_DEBIAN, test "$enable_debian" = "yes")
+ 
+ AC_MSG_CHECKING(for kernel)
+-case `uname` in 
++case `uname` in
+     Darwin)
+         AC_MSG_RESULT(darwin)
+         CXXFLAGS="${CXXFLAGS} -fPIC"
+         CFLAGS="${CFLAGS} -fPIC"
+         STFKERNEL="darwin"
+     ;;
+-    *)  
++    *)
+         # treat everything else (kfreebsd, hurd) as linux
+         AC_MSG_RESULT(linux or similar)
+         CXXFLAGS="-fPIC"
+@@ -49,7 +47,7 @@ esac
+ AM_CONDITIONAL([ISDARWIN], [test $STFKERNEL = "darwin"])
+ 
+ # Checks for python libraries.
+-AC_ARG_ENABLE([python], 
++AC_ARG_ENABLE([python],
+   AS_HELP_STRING(
+     [--enable-python],
+     [enable python console (default="yes")]),,
+@@ -64,15 +62,15 @@ if (test "$enable_python" = "yes") || (test "$enable_module" = "yes"); then
+     AC_SUBST(SWIG)
+     CXXFLAGS="${CXXFLAGS}"
+     CFLAGS="${CFLAGS}"
+-    LIBPYTHON_LDFLAGS=$PYTHON_LDFLAGS 
++    LIBPYTHON_LDFLAGS=$PYTHON_LDFLAGS
+     LIBPYTHON_INCLUDES=$PYTHON_CPPFLAGS
+     LIBNUMPY_INCLUDES=$PYTHON_NUMPY_INCLUDE
+     LIBWXPYTHON_INCLUDES=$PYTHON_WXPYTHON_INCLUDE
+ else
+-    LIBPYTHON_LDFLAGS= 
+-    LIBPYTHON_INCLUDES= 
+-    LIBNUMPY_INCLUDES= 
+-    LIBWXPYTHON_INCLUDES= 
++    LIBPYTHON_LDFLAGS=
++    LIBPYTHON_INCLUDES=
++    LIBNUMPY_INCLUDES=
++    LIBWXPYTHON_INCLUDES=
+ fi
+ AC_SUBST(LIBPYTHON_LDFLAGS)
+ AC_SUBST(LIBPYTHON_INCLUDES)
+@@ -80,7 +78,7 @@ AC_SUBST(LIBNUMPY_INCLUDES)
+ AC_SUBST(LIBWXPYTHON_INCLUDES)
+ 
+ AC_MSG_CHECKING(for kernel)
+-case ${STFKERNEL} in 
++case ${STFKERNEL} in
+     darwin)
+         LIBSTF_LDFLAGS="-avoid-version"
+         if test "$enable_module" = "yes" ; then
+@@ -139,24 +137,26 @@ if test "$with_pslope" = "yes" ; then
+     CPPFLAGS="${CPPFLAGS} -DWITH_PSLOPE"
+ fi
+ 
+-AC_ARG_WITH([biosig], AS_HELP_STRING([--with-biosig],[build with libbiosig support]),[])
+-AM_CONDITIONAL(WITH_BIOSIG, test "$with_biosig" = "yes")
+-
+-AC_ARG_WITH([biosig2], AS_HELP_STRING([--with-biosig2],[equivalent to --with-biosig]),[])
+-AM_CONDITIONAL(WITH_BIOSIG2, test "$with_biosig2" = "yes")
++# by default build WITH_BIOSIG
++AC_ARG_WITH([biosig],
++	[AS_HELP_STRING([--without-biosig], [disable support for biosig])],
++	[],
++	[with_biosig=yes] )
++AM_CONDITIONAL(WITH_BIOSIG, test "x$with_biosig" = "xyes")
++AM_CONDITIONAL(WITH_BIOSIG2, test "x$with_biosig" = "xyes")
+ 
+ AC_ARG_WITH([biosiglite], AS_HELP_STRING([--with-biosiglite], [use builtin biosig library]), [])
+-AM_CONDITIONAL(WITH_BIOSIGLITE, test "$with_biosiglite" = "yes")
++AM_CONDITIONAL(WITH_BIOSIGLITE, test "x$with_biosiglite" = "xyes")
++AM_CONDITIONAL(WITH_BIOSIG, test "x$with_biosig" = "xyes")
+ 
+-if test "$with_biosig2" = "yes" ; then
+-    CPPFLAGS="${CPPFLAGS} -DWITH_BIOSIG2"
+-    LIBBIOSIG_LDFLAGS="-lbiosig -lcholmod"
+-elif test "$with_biosig" = "yes" ; then
+-    CPPFLAGS="${CPPFLAGS} -DWITH_BIOSIG"
+-    LIBBIOSIG_LDFLAGS="-lbiosig -lcholmod"
+-elif test "$with_biosiglite" = "yes" ; then
+-    CPPFLAGS="${CPPFLAGS} -DWITH_BIOSIG2 -DWITH_BIOSIGLITE"
++if test "x$with_biosiglite" = xyes ; then
++    CPPFLAGS="${CPPFLAGS} -DWITH_BIOSIG -DWITH_BIOSIGLITE"
+     LIBBIOSIG_LDFLAGS="-lcholmod"
++elif test "x$with_biosig" != xno ; then
++    CPPFLAGS="${CPPFLAGS} -DWITH_BIOSIG"
++    LIBBIOSIG_LDFLAGS="-lbiosig"
++else
++    AC_MSG_WARN([Stimfit recommends using --with-biosig or --with-biosiglite])
+ fi
+ AC_SUBST(LIBBIOSIG_LDFLAGS)
+ 
+@@ -166,11 +166,20 @@ AS_HELP_STRING([--with-lapack-lib=LAPACKLIB],[Provide full path to custom lapack
+     if test "$withval" != "yes" -a "$withval" != ""; then
+         LAPACKLIB=$withval
+         LIBLAPACK_LDFLAGS="$LAPACKLIB"
+-        CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK" 
++        CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK"
+     fi
+ ])
+ 
+ # Checks for libraries.
++AC_CHECK_LIB([biosig], [sread], [with_biosig="yes"])
++AM_CONDITIONAL(WITH_BIOSIG, test "x$with_biosig" == "xyes")
++if test "x$with_biosiglite" != "xyes" ; then
++if test "x$with_biosig" == "xyes" ; then
++    CPPFLAGS="${CPPFLAGS} -DWITH_BIOSIG"
++    LIBBIOSIG_LDFLAGS="-lbiosig"
++fi
++fi
++
+ AC_CHECK_LIB([fftw3], [fftw_malloc], HAVE_FFTW3="yes")
+ if test "${HAVE_FFTW3}" != "yes" ; then
+     AC_MSG_ERROR([Couldn't find fftw3.])
+@@ -180,8 +189,10 @@ if test "$LAPACKLIB" = ""; then
+     if test "$STFKERNEL" = "darwin" ; then
+         # System LAPACK
          LIBLAPACK_LDFLAGS="/usr/lib/liblapack.dylib -framework Accelerate"
-         CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK -DHAVE_LAPACK_SUFFIX" 
+-        CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK -DHAVE_LAPACK_SUFFIX" 
++        CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK -DHAVE_LAPACK_SUFFIX"
      else
 +      AC_CHECK_LIB([openblas], [dgemm_], HAVE_OPENBLAS="yes",, [-lgomp -lpthread -lm])
 +      if test "${HAVE_OPENBLAS}" != "yes" ; then
          AC_CHECK_LIB([lapack], [dgemm_], HAVE_LAPACKX="yes")
          if test "${HAVE_LAPACKX}" != "yes" ; then
              AC_CHECK_LIB([lapack3], [dgemm_], HAVE_LAPACK3="yes")
-@@ -186,15 +189,11 @@ if test "$LAPACKLIB" = ""; then
+@@ -189,24 +200,24 @@ if test "$LAPACKLIB" = ""; then
                  AC_CHECK_LIB([lapack-3], [dgemm_], HAVE_LAPACK_3="yes")
                      if test "${HAVE_LAPACK_3}" != "yes" ; then
                          AC_CHECK_LIB([blas], [dgemm_], HAVE_ATLAS="yes")
@@ -38,9 +285,13 @@ index 1f8c58f5..8f70fc5a 100644
                      fi
              else
                  LIBLAPACK_LDFLAGS=-llapack3
-@@ -204,6 +203,10 @@ if test "$LAPACKLIB" = ""; then
+-                CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK " 
++                CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK "
+             fi
+         else
              LIBLAPACK_LDFLAGS="-llapack -lblas"
-             CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK " 
+-            CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK " 
++            CPPFLAGS="${CPPFLAGS} -DHAVE_LAPACK "
          fi
 +      else
 +        LIBLAPACK_LDFLAGS="-lopenblas"
@@ -49,7 +300,34 @@ index 1f8c58f5..8f70fc5a 100644
      fi
  fi
  AC_SUBST(LIBLAPACK_LDFLAGS)
-@@ -326,14 +329,10 @@ fi
+@@ -278,7 +289,7 @@ MACSETFILE="@true"
+ 
+ AC_MSG_CHECKING(for wxWidgets platform)
+ WX_BASENAME="`$WXCONFIG --basename`"
+-case $WX_BASENAME in 
++case $WX_BASENAME in
+     *wx_osx*)
+         AC_MSG_RESULT($WX_BASENAME)
+         AC_CHECK_PROG(REZ, Rez, Rez, /Developer/Tools/Rez)
+@@ -293,7 +304,7 @@ case $WX_BASENAME in
+         AC_CHECK_PROG(SETFILE, SetFile, SetFile, /Developer/Tools/SetFile)
+         MACSETFILE="\$(SETFILE)"
+     ;;
+-    *) 
++    *)
+         AC_MSG_RESULT(other)
+     ;;
+ esac
+@@ -310,7 +321,7 @@ AS_HELP_STRING([--with-hdf5-prefix=HDF5_PREFIX],[Provide full path to hdf5 prefi
+     if test "$withval" != "yes" -a "$withval" != ""; then
+         HDF5_PREFIX=${withval}
+         LDFLAGS="${LDFLAGS} -L${HDF5_PREFIX}/lib"
+-        CPPFLAGS="${CPPFLAGS} -I${HDF5_PREFIX}/include" 
++        CPPFLAGS="${CPPFLAGS} -I${HDF5_PREFIX}/include"
+     fi
+ ])
+ 
+@@ -329,14 +340,10 @@ fi
  
  AC_CHECK_HEADER([hdf5.h], [], [AC_MSG_ERROR([Couldn't find hdf5 header])])
  AC_CHECK_LIB([hdf5],[H5Fopen],HAVE_HDF5="yes")
@@ -64,3 +342,469 @@ index 1f8c58f5..8f70fc5a 100644
  AC_SUBST(LIBHDF5_LDFLAGS)
  
  AC_ARG_ENABLE([debug],
+diff --git a/src/libstfio/Makefile.am b/src/libstfio/Makefile.am
+index 2855b49f..8bff71a3 100644
+--- a/src/libstfio/Makefile.am
++++ b/src/libstfio/Makefile.am
+@@ -27,10 +27,10 @@ libstfio_la_SOURCES =  ./channel.cpp ./section.cpp ./recording.cpp ./stfio.cpp \
+ 	./abf/axon/AxAbfFio32/msbincvt.cpp \
+ 	./abf/axon/Common/unix.cpp \
+ 	./abf/axon/AxAbfFio32/abferror.cpp \
+-        ./abf/axon/AxAtfFio32/axatffio32.cpp \
+-        ./abf/axon/AxAtfFio32/fileio2.cpp \
+-        ./abf/axon2/ProtocolReaderABF2.cpp \
+-        ./abf/axon2/SimpleStringCache.cpp \
++	./abf/axon/AxAtfFio32/axatffio32.cpp \
++	./abf/axon/AxAtfFio32/fileio2.cpp \
++	./abf/axon2/ProtocolReaderABF2.cpp \
++	./abf/axon2/SimpleStringCache.cpp \
+ 	./abf/axon2/abf2headr.cpp \
+ 	./atf/atflib.cpp \
+ 	./axg/axglib.cpp \
+@@ -38,7 +38,7 @@ libstfio_la_SOURCES =  ./channel.cpp ./section.cpp ./recording.cpp ./stfio.cpp \
+ 	./axg/fileUtils.cpp \
+ 	./axg/stringUtils.cpp \
+ 	./axg/byteswap.cpp \
+-        ./heka/hekalib.cpp \
++	./biosig/biosiglib.cpp \
+ 	./igor/igorlib.cpp \
+ 	./igor/CrossPlatformFileIO.c \
+ 	./igor/WriteWave.c \
+@@ -46,16 +46,9 @@ libstfio_la_SOURCES =  ./channel.cpp ./section.cpp ./recording.cpp ./stfio.cpp \
+ 	./intan/intanlib.cpp \
+ 	./intan/streams.cpp
+ 
+-if WITH_BIOSIG2
+-libstfio_la_SOURCES += ./biosig/biosiglib.cpp
+-else
+-if WITH_BIOSIG
+-libstfio_la_SOURCES += ./biosig/biosiglib.cpp
+-else
+-if WITH_BIOSIGLITE
+-libstfio_la_SOURCES += ./biosig/biosiglib.cpp
+-endif
+-endif
++if !WITH_BIOSIG
++libstfio_la_SOURCES += \
++	./heka/hekalib.cpp
+ endif
+ 
+ libstfio_la_LDFLAGS =
+diff --git a/src/libstfio/biosig/biosiglib.cpp b/src/libstfio/biosig/biosiglib.cpp
+index 5432399a..be6fc7ed 100644
+--- a/src/libstfio/biosig/biosiglib.cpp
++++ b/src/libstfio/biosig/biosiglib.cpp
+@@ -59,7 +59,7 @@ stfio::filetype stfio_file_type(HDRTYPE* hdr) {
+         }
+ }
+ 
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+ bool stfio::check_biosig_version(int a, int b, int c) {
+ 	return (BIOSIG_VERSION >= 10000*a + 100*b + c);
+ }
+@@ -96,8 +96,11 @@ stfio::filetype stfio::importBiosigFile(const std::string &fName, Recording &Ret
+         return type;
+     }
+     enum FileFormat biosig_filetype=biosig_get_filetype(hdr);
+-    if (biosig_filetype==ATF || biosig_filetype==ABF2 || biosig_filetype==HDF ) {
+-        // ATF, ABF2 and HDF5 support should be handled by importATF, and importABF, and importHDF5 not importBiosig
++    if ( (biosig_filetype==ATF  && get_biosig_version() < 0x030001) \
++      || (biosig_filetype==ABF2 && get_biosig_version() < 0x030001) \
++      ||  biosig_filetype==HDF ) {
++        // ATF, ABF2 HDF5 support should be handled by importATF, and importABF, and importHDF5 not importBiosig
++        // with libbiosig v3.0.1 (release 2.3.1) and later, ATF and ABF2 should be handled by Biosig
+         ReturnData.resize(0);
+         destructHDR(hdr);
+         return type;
+diff --git a/src/libstfio/biosig/biosiglib.h b/src/libstfio/biosig/biosiglib.h
+index e4d6077a..7cf3108a 100644
+--- a/src/libstfio/biosig/biosiglib.h
++++ b/src/libstfio/biosig/biosiglib.h
+@@ -39,7 +39,7 @@
+ 
+ namespace stfio {
+ 
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+ //! return version of libbiosig e.g. 10403 correspond to version 1.4.3
+ StfioDll bool check_biosig_version(int a, int b, int c);
+ #endif
+diff --git a/src/libstfio/heka/hekalib.cpp b/src/libstfio/heka/hekalib.cpp
+index a715fe25..180f4140 100644
+--- a/src/libstfio/heka/hekalib.cpp
++++ b/src/libstfio/heka/hekalib.cpp
+@@ -408,8 +408,8 @@ void printHeader(const BundleHeader& header) {
+ 
+ void ByteSwap(unsigned char * b, int n)
+ {
+-    register int i = 0;
+-    register int j = n-1;
++    int i = 0;
++    int j = n-1;
+     while (i<j)
+     {
+         std::swap(b[i], b[j]);
+diff --git a/src/libstfio/stfio.cpp b/src/libstfio/stfio.cpp
+index 0a006574..8ac35d8e 100644
+--- a/src/libstfio/stfio.cpp
++++ b/src/libstfio/stfio.cpp
+@@ -34,21 +34,13 @@
+ #include "./atf/atflib.h"
+ #include "./axg/axglib.h"
+ #include "./igor/igorlib.h"
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if (defined(WITH_BIOSIG))
+   #include "./biosig/biosiglib.h"
++#else
++  #include "./heka/hekalib.h"
+ #endif
+ #include "./cfs/cfslib.h"
+ #include "./intan/intanlib.h"
+-#ifndef TEST_MINIMAL
+-  #include "./heka/hekalib.h"
+-#else
+-  #if (!defined(WITH_BIOSIG) && !defined(WITH_BIOSIG2))
+-    #error -DTEST_MINIMAL requires -DWITH_BIOSIG or -DWITH_BIOSIG2
+-  #endif
+-#endif
+-#if 0
+-#include "./son/sonlib.h"
+-#endif
+ 
+ #ifdef _MSC_VER
+     StfioDll long int lround(double x) {
+@@ -97,7 +89,7 @@ stfio::findType(const std::string& ext) {
+     else if (ext=="*.smr") return stfio::son;
+     else if (ext=="*.tdms") return stfio::tdms;
+     else if (ext=="*.clp") return stfio::intan;
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+     else if (ext=="*.dat;*.cfs;*.gdf;*.ibw;*.wcp") return stfio::biosig;
+     else if (ext=="*.*")   return stfio::biosig;
+ #endif
+@@ -129,7 +121,7 @@ stfio::findExtension(stfio::filetype ftype) {
+          return ".tdms";
+      case stfio::intan:
+          return ".clp";
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+      case stfio::biosig:
+          return ".gdf";
+ #endif
+@@ -147,25 +139,9 @@ bool stfio::importFile(
+ ) {
+     try {
+ 
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+        // make use of automated file type identification
+ 
+-#ifndef WITHOUT_ABF
+-        if (!check_biosig_version(1,6,3)) {
+-            try {
+-                // workaround for older versions of libbiosig
+-                stfio::importABFFile(fName, ReturnData, progDlg);
+-                return true;
+-            }
+-            catch (...) {
+-#ifndef NDEBUG
+-                fprintf(stdout,"%s (line %i): importABF attempted\n",__FILE__,__LINE__);
+-#endif
+-            };
+-       }
+-#endif // WITHOUT_ABF
+-
+-       // if this point is reached, import ABF was not applied or not successful
+         try {
+             stfio::filetype type1 = stfio::importBiosigFile(fName, ReturnData, progDlg);
+             switch (type1) {
+@@ -188,7 +164,6 @@ bool stfio::importFile(
+             stfio::importHDF5File(fName, ReturnData, progDlg);
+             break;
+         }
+-#ifndef WITHOUT_ABF
+         case stfio::abf: {
+             stfio::importABFFile(fName, ReturnData, progDlg);
+             break;
+@@ -197,69 +172,22 @@ bool stfio::importFile(
+             stfio::importATFFile(fName, ReturnData, progDlg);
+             break;
+         }
+-#endif
+-#ifndef WITHOUT_AXG
+         case stfio::axg: {
+             stfio::importAXGFile(fName, ReturnData, progDlg);
+             break;
+         }
+-#endif
+         case stfio::intan: {
+             stfio::importIntanFile(fName, ReturnData, progDlg);
+             break;
+         }
+-
+-#ifndef TEST_MINIMAL
+         case stfio::cfs: {
+-            {
+             int res = stfio::importCFSFile(fName, ReturnData, progDlg);
+-         /*
+-            // disable old Heka import - its broken and will not be fixed, use biosig instead
+-            if (res==-7) {
+-                stfio::importHEKAFile(fName, ReturnData, progDlg);
+-            }
+-         */
+-          break;
+-            }
+-        }
+-        /*
+-	// disable old Heka import - its broken and will not be fixed, use biosig instead
+-        case stfio::heka: {
+-            {
+-                try {
+-                    stfio::importHEKAFile(fName, ReturnData, progDlg);
+-                } catch (const std::runtime_error& e) {
+-                    stfio::importCFSFile(fName, ReturnData, progDlg);
+-                }
+-                break;
+-            }
+-        }
+-        */
+-#endif // TEST_MINIMAL
+-
++            break;
++           }
+         default:
+             throw std::runtime_error("Unknown or unsupported file type");
+ 	}
+ 
+-#if 0
+-        case stfio::son: {
+-            stfio::SON::importSONFile(fName,ReturnData);
+-            break;
+-        }
+-        case stfio::ascii: {
+-            stfio::importASCIIFile( fName, txtImport.hLines, txtImport.ncolumns,
+-                    txtImport.firstIsTime, txtImport.toSection, ReturnData );
+-            if (!txtImport.firstIsTime) {
+-                ReturnData.SetXScale(1.0/txtImport.sr);
+-            }
+-            if (ReturnData.size()>0)
+-                ReturnData[0].SetYUnits(txtImport.yUnits);
+-            if (ReturnData.size()>1)
+-                ReturnData[1].SetYUnits(txtImport.yUnitsCh2);
+-            ReturnData.SetXUnits(txtImport.xUnits);
+-            break;
+-        }
+-#endif
+     }
+     catch (...) {
+         throw;
+@@ -272,13 +200,11 @@ bool stfio::exportFile(const std::string& fName, stfio::filetype type, const Rec
+ {
+     try {
+         switch (type) {
+-#ifndef WITHOUT_ABF
+         case stfio::atf: {
+             stfio::exportATFFile(fName, Data);
+             break;
+         }
+-#endif
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+         case stfio::biosig: {
+             stfio::exportBiosigFile(fName, Data, progDlg);
+             break;
+diff --git a/src/stimfit/gui/app.cpp b/src/stimfit/gui/app.cpp
+index 339e630d..fd90d90c 100755
+--- a/src/stimfit/gui/app.cpp
++++ b/src/stimfit/gui/app.cpp
+@@ -162,13 +162,13 @@ bool wxStfApp::OnInit(void)
+     //// Create a document manager
+     wxDocManager* docManager = new wxDocManager;
+     //// Create a template relating drawing documents to their views
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+     m_biosigTemplate=new wxDocTemplate( docManager,
+                                      wxT("All files"), wxT("*.*"), wxT(""), wxT(""),
+                                      wxT("Biosig Document"), wxT("Biosig View"), CLASSINFO(wxStfDoc),
+                                      CLASSINFO(wxStfView) );
+ #endif
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+     m_biosigTemplate=new wxDocTemplate( docManager,
+                                      wxT("Biosig files"), wxT("*.dat;*.cfs;*.gdf;*.ibw;*.wcp"), wxT(""), wxT(""),
+                                      wxT("Biosig Document"), wxT("Biosig View"), CLASSINFO(wxStfDoc),
+@@ -189,11 +189,7 @@ bool wxStfApp::OnInit(void)
+                                      wxT("ABF Document"), wxT("ABF View"), CLASSINFO(wxStfDoc),
+                                      CLASSINFO(wxStfView) );
+ #if defined(__WXGTK__) || defined(__WXMAC__)
+-#if !defined(__MINGW32__)
+-#if !defined(WITHOUT_ABF)
+     ABF_Initialize();
+-#endif
+-#endif
+ #endif
+     m_atfTemplate=new wxDocTemplate( docManager,
+                                      wxT("Axon text file"), wxT("*.atf"), wxT(""), wxT("atf"),
+diff --git a/src/stimfit/gui/doc.cpp b/src/stimfit/gui/doc.cpp
+index 5f17e4bd..4154d3aa 100755
+--- a/src/stimfit/gui/doc.cpp
++++ b/src/stimfit/gui/doc.cpp
+@@ -219,17 +219,9 @@ bool wxStfDoc::OnOpenDocument(const wxString& filename) {
+     wxGetApp().wxWriteProfileString( wxT("Settings"), wxT("Last directory"), wxfFilename.GetPath() );
+     if (wxDocument::OnOpenDocument(filename)) { //calls base class function
+ 
+-#ifndef TEST_MINIMAL
+-    #if 0 //(defined(WITH_BIOSIG) || defined(WITH_BIOSIG2) && !defined(__WXMAC__))
+-        // Detect type of file according to filter:
+-        wxString filter(GetDocumentTemplate()->GetFileFilter());
+-    #else
+         wxString filter(wxT("*.") + wxfFilename.GetExt());
+-    #endif
+         stfio::filetype type = stfio::findType(stf::wx2std(filter));
+-#else
+-        stfio::filetype type = stfio::none;
+-#endif
++
+ #if 0 // TODO: backport ascii
+         if (type==stf::ascii) {
+             if (!wxGetApp().get_directTxtImport()) {
+@@ -730,7 +722,7 @@ bool wxStfDoc::SaveAs() {
+     filters += wxT("Igor binary wave (*.ibw)|*.ibw|");
+     filters += wxT("Mantis TDMS file (*.tdms)|*.tdms|");
+     filters += wxT("Text file series (*.txt)|*.txt|");
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+     filters += wxT("GDF file (*.gdf)|*.gdf");
+ #endif
+ 
+@@ -750,7 +742,7 @@ bool wxStfDoc::SaveAs() {
+             case 3: type=stfio::igor; break;
+             case 4: type=stfio::tdms; break;
+             case 5: type=stfio::ascii; break;
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+             default: type=stfio::biosig;
+ #else
+             default: type=stfio::hdf5;
+@@ -803,7 +795,6 @@ Recording wxStfDoc::ReorderChannels() {
+     return writeRec;
+ }
+ 
+-#ifndef TEST_MINIMAL
+ bool wxStfDoc::DoSaveDocument(const wxString& filename) {
+     Recording writeRec(ReorderChannels());
+     if (writeRec.size() == 0) return false;
+@@ -819,7 +810,6 @@ bool wxStfDoc::DoSaveDocument(const wxString& filename) {
+         return false;
+     }
+ }
+-#endif
+ 
+ void wxStfDoc::WriteToReg() {
+     //Write file length
+diff --git a/src/stimfit/gui/graph.cpp b/src/stimfit/gui/graph.cpp
+index f7ee24ec..9151f3d8 100755
+--- a/src/stimfit/gui/graph.cpp
++++ b/src/stimfit/gui/graph.cpp
+@@ -694,10 +694,10 @@ void wxStfGraph::DoPlot( wxDC* pDC, const Vector_double& trace, int start, int e
+ 
+     switch (pt) {
+      case active:
+-         yFormatFunc = std::bind1st( std::mem_fun(&wxStfGraph::yFormatD), this);
++         yFormatFunc = std::bind1st( std::mem_fn(&wxStfGraph::yFormatD), this);
+          break;
+      case reference:
+-         yFormatFunc = std::bind1st( std::mem_fun(&wxStfGraph::yFormatD2), this);
++         yFormatFunc = std::bind1st( std::mem_fn(&wxStfGraph::yFormatD2), this);
+          break;
+      case background:
+          Vector_double::const_iterator max_el = std::max_element(trace.begin(), trace.end());
+@@ -712,7 +712,7 @@ void wxStfGraph::DoPlot( wxDC* pDC, const Vector_double& trace, int start, int e
+          WindowRect.height /= Doc()->size();
+          FittorectY(yzoombg, WindowRect, min, max, 1.0);
+          yzoombg.startPosY += bgno*WindowRect.height;
+-         yFormatFunc = std::bind1st( std::mem_fun(&wxStfGraph::yFormatDB), this);
++         yFormatFunc = std::bind1st( std::mem_fn(&wxStfGraph::yFormatDB), this);
+          break;
+     }
+ 
+@@ -832,10 +832,10 @@ void wxStfGraph::DoPrint( wxDC* pDC, const Vector_double& trace, int start, int
+     
+     switch (ptype) {
+      case active:
+-         yFormatFunc = std::bind1st( std::mem_fun(&wxStfGraph::yFormatD), this);
++         yFormatFunc = std::bind1st( std::mem_fn(&wxStfGraph::yFormatD), this);
+          break;
+      default:
+-         yFormatFunc = std::bind1st( std::mem_fun(&wxStfGraph::yFormatD2), this);
++         yFormatFunc = std::bind1st( std::mem_fn(&wxStfGraph::yFormatD2), this);
+          break;
+     }
+ 
+diff --git a/src/stimfit/gui/parentframe.cpp b/src/stimfit/gui/parentframe.cpp
+index e573397b..d0bedb51 100755
+--- a/src/stimfit/gui/parentframe.cpp
++++ b/src/stimfit/gui/parentframe.cpp
+@@ -62,7 +62,7 @@
+ #include "./dlgs/smalldlgs.h"
+ #include "./copygrid.h"
+ #include "./../../libstfio/atf/atflib.h"
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+     #include "./../../libstfio/biosig/biosiglib.h"
+ #endif
+ #include "./../../libstfio/igor/igorlib.h"
+@@ -548,9 +548,7 @@ wxStfToolBar* wxStfParentFrame::CreateCursorTb() {
+ }
+ 
+ #if 0
+-#if defined(WITH_BIOSIG2)
+-    #define CREDIT_BIOSIG "Biosig import using libbiosig2 http://biosig.sf.net\n\n"
+-#elif defined(WITH_BIOSIG)
++#if defined(WITH_BIOSIG)
+     #define CREDIT_BIOSIG "Biosig import using libbiosig http://biosig.sf.net\n\n"
+ #else 
+     #define CREDIT_BIOSIG ""
+@@ -569,7 +567,7 @@ void wxStfParentFrame::OnAbout(wxCommandEvent& WXUNUSED(event) )
+     Levenberg-Marquardt non-linear regression, version ") + wxString(wxT(LM_VERSION)) + wxT("\n\
+     Manolis Lourakis, http://www.ics.forth.gr/~lourakis/levmar/ \n\n")) +
+ 
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+     wxString( wxT("BioSig import using libbiosig\n") ) + 
+     //+ wxString( wxT("version ") + wxT(BIOSIG_VERSION ) ) +
+     wxString( wxT("http://biosig.sf.net\n\n") ) +
+@@ -794,18 +792,16 @@ void wxStfParentFrame::OnConvert(wxCommandEvent& WXUNUSED(event) ) {
+ 
+                 stf::wxProgressInfo progDlgOut("Writing file", "Opening file", 100);
+                 switch ( eft ) {
+-#ifndef WITHOUT_ABF
+                  case stfio::atf:
+                      stfio::exportATFFile(stf::wx2std(destFilename), sourceFile);
+                      dest_ext = wxT("Axon textfile [*.atf]");
+                      break;
+-#endif
+                  case stfio::igor:
+                      stfio::exportIGORFile(stf::wx2std(destFilename), sourceFile, progDlgOut);
+                      dest_ext = wxT("Igor binary file [*.ibw]");
+                      break;
+ 
+-#if (defined(WITH_BIOSIG) || defined(WITH_BIOSIG2))
++#if defined(WITH_BIOSIG)
+                  case stfio::biosig:
+                      stfio::exportBiosigFile(stf::wx2std(destFilename), sourceFile, progDlgOut);
+                      dest_ext = wxT("Biosig/GDF [*.gdf]");
+diff --git a/src/stimfit/py/embedded_stf.py b/src/stimfit/py/embedded_stf.py
+index 361181f4..b75e0dca 100644
+--- a/src/stimfit/py/embedded_stf.py
++++ b/src/stimfit/py/embedded_stf.py
+@@ -10,7 +10,7 @@ starting code to embed wxPython into the stf application.
+ 
+ """
+ import sys
+-if 'win' in sys.platform:
++if 'win' in sys.platform and sys.platform != 'darwin':
+     import wxversion
+     wxversion.select('3.0-msw')
+ import wx
