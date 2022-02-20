@@ -3,11 +3,12 @@
 
 PKG             := gdcm
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 2.8.2
-$(PKG)_CHECKSUM := 5462c7859e01e5d5d0fb86a19a6c775484a6c44abd8545ea71180d4c41bf0f89
+$(PKG)_VERSION  := 2.8.7
+$(PKG)_CHECKSUM := 7a08baa93e90bce17d9999d59b95876808801a287812348e27a23decb1ebc58c
 $(PKG)_SUBDIR   := $(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.gz
-$(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/$(PKG)/$(PKG)%202.x/GDCM%20$($(PKG)_VERSION)/$($(PKG)_FILE)
+$(PKG)_URL      := https://sourceforge.net/projects/gdcm/files/gdcm%202.x/GDCM%202.8.7/gdcm-2.8.7.tar.gz
+#$(PKG)_URL      := https://$(SOURCEFORGE_MIRROR)/project/$(PKG)/$(PKG) 2.x/GDCM $($(PKG)_VERSION)/$($(PKG)_FILE)"
 $(PKG)_DEPS     := expat zlib
 
 $(PKG)_CMAKE_OPTS :=
@@ -18,8 +19,8 @@ ifeq ($(MXE_NATIVE_MINGW_BUILD),yes)
 endif
 
 define $(PKG)_UPDATE
-    wget -q -O- 'https://sourceforge.net/projects/gdcm/files/gdcm%202.x/' | \
-         sed -n 's_.*Download gdcm-\([0-9\.]*\)\.tar\.gz.*_\1_ip'
+    echo 'Warning: Updates are temporarily disabled for package gdcm.' >&2;
+    echo $(gdcm_VERSION)
 endef
 
 ifeq ($(MXE_SYSTEM),msvc)
@@ -31,7 +32,6 @@ define $(PKG)_BUILD
         -DGDCM_BUILD_SHARED_LIBS:BOOL=TRUE \
         -DGDCM_USE_SYSTEM_ZLIB:BOOL=TRUE \
 	-DGDCM_USE_SYSTEM_EXPAT:BOOL=TRUE \
-        -DGDCM_BUILD_DOCBOOK_MANPAGES:BOOL=OFF \
         ../$($(PKG)_SUBDIR)
     cd '$(1)/../.build' && \
         env -u MAKE -u MAKEFLAGS nmake && \
@@ -44,7 +44,6 @@ define $(PKG)_BUILD
         $($(PKG)_CMAKE_OPTS) \
         -DCMAKE_TOOLCHAIN_FILE='$(CMAKE_TOOLCHAIN_FILE)'  \
         -DGDCM_BUILD_SHARED_LIBS:BOOL=TRUE \
-        -DGDCM_BUILD_DOCBOOK_MANPAGES:BOOL=OFF \
         ../$($(PKG)_SUBDIR)
     make -C $(1)/../.build -j $(JOBS) 
     make -C $(1)/../.build -j 1 install
