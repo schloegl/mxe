@@ -17,14 +17,13 @@ $(PKG)_URL      := https://libisl.sourceforge.io/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://gcc.gnu.org/pub/gcc/infrastructure/$($(PKG)_FILE)
 
 PKG             := gcc
-$(PKG)_VERSION  := 10.3.0
-$(PKG)_CHECKSUM := 64f404c1a650f27fc33da242e1f2df54952e3963a49e06e73f6940f3223ac344
+$(PKG)_VERSION  := 12-20220327
+$(PKG)_CHECKSUM := 1d9f8b8f7f3521300aaff34ab8a3cff0fe8c45c4ae659b08af5b077d5e4ceb3e
 $(PKG)_SUBDIR   := gcc-$($(PKG)_VERSION)
 $(PKG)_FILE     := gcc-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/gcc/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_URL_2    := https://www.mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc10.patch \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-1-driver-access-fix.diff
+$(PKG)_URL_2    := https://www.mirrorservice.org/sites/sourceware.org/pub/gcc/snapshots/LATEST-12/$($(PKG)_FILE)
+$(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc12.patch
 $(PKG)_DEPS     := binutils mingw-w64 $(addprefix $(BUILD)~,gmp isl mpc mpfr zstd)
 
 _$(PKG)_CONFIGURE_OPTS = --with-zstd='$(PREFIX)/$(BUILD)'

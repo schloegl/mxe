@@ -40,6 +40,7 @@ LIBTOOLIZE := $(shell glibtoolize --help >/dev/null 2>&1 && echo g)libtoolize
 OPENSSL    := openssl
 PATCH      := $(shell gpatch --help >/dev/null 2>&1 && echo g)patch
 PYTHON     := $(shell PATH="$(ORIG_PATH)" which python)
+PYTHON3    := $(shell PATH="$(ORIG_PATH)" which python3)
 PY_XY_VER  := $(shell $(PYTHON) -c "import sys; print('{0[0]}.{0[1]}'.format(sys.version_info))")
 SED        := $(shell gsed --help >/dev/null 2>&1 && echo g)sed
 SORT       := $(shell gsort --help >/dev/null 2>&1 && echo g)sort
@@ -69,6 +70,7 @@ REQUIREMENTS := \
     $(PATCH) \
     perl \
     $(PYTHON) \
+    $(PYTHON3) \
     ruby \
     $(SED) \
     $(SORT) \
@@ -131,6 +133,21 @@ MXE_CONFIGURE_OPTS = \
         --enable-static --disable-shared , \
         --disable-static --enable-shared ) \
     $(MXE_DISABLE_DOC_OPTS)
+
+MXE_MESON_WRAPPER = '$(PREFIX)/bin/$(TARGET)-meson'
+MXE_MESON_NATIVE_WRAPPER = '$(PREFIX)/bin/mxe-native-meson'
+MXE_NINJA = '$(PREFIX)/$(BUILD)/bin/ninja'
+
+# Please edit meson wrapper and/or target file instead of this,
+# unless your changes only apply to building MXE's packages
+MXE_MESON_OPTS = \
+    --buildtype=release \
+    $(if $(findstring mxe,$(MXE_USE_CCACHE)), \
+    --cross-file='$(PREFIX)/$(TARGET)/share/meson/mxe-crossfile-internal.meson')
+
+PKG_MESON_OPTS = \
+    $(_$(PKG)_MESON_OPTS) \
+    $($(PKG)_MESON_OPTS)
 
 PKG_CONFIGURE_OPTS = \
     $(_$(PKG)_CONFIGURE_OPTS) \
@@ -722,7 +739,7 @@ else
     NONET_LIB := $(PREFIX)/$(BUILD)/lib/nonetwork.dylib
     PRELOAD   := DYLD_FORCE_FLAT_NAMESPACE=1 DYLD_INSERT_LIBRARIES='$(NONET_LIB)' \
                  http_proxy=$(DUMMY_PROXY) https_proxy=$(DUMMY_PROXY)
-    NONET_CFLAGS := -arch x86_64
+    NONET_CFLAGS := -arch $(shell uname -m)
 endif
 
 $(NONET_LIB): $(TOP_DIR)/tools/nonetwork.c | $(PREFIX)/$(BUILD)/lib/.gitkeep
