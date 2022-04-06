@@ -9,7 +9,7 @@ EXT_DIR  := $(TOP_DIR)/ext
 include $(EXT_DIR)/gmsl
 
 MXE_TRIPLETS       := i686-w64-mingw32 x86_64-w64-mingw32
-MXE_LIB_TYPES      := static shared
+MXE_LIB_TYPES      := static # shared
 MXE_TARGET_LIST    := $(strip $(foreach TRIPLET,$(MXE_TRIPLETS),\
                           $(addprefix $(TRIPLET).,$(MXE_LIB_TYPES))))
 MXE_TARGETS        := i686-w64-mingw32.static x86_64-w64-mingw32.static
@@ -40,6 +40,7 @@ LIBTOOLIZE := $(shell glibtoolize --help >/dev/null 2>&1 && echo g)libtoolize
 OPENSSL    := openssl
 PATCH      := $(shell gpatch --help >/dev/null 2>&1 && echo g)patch
 PYTHON     := $(shell PATH="$(ORIG_PATH)" which python)
+PYTHON3    := $(shell PATH="$(ORIG_PATH)" which python3)
 PY_XY_VER  := $(shell $(PYTHON) -c "import sys; print('{0[0]}.{0[1]}'.format(sys.version_info))")
 SED        := $(shell gsed --help >/dev/null 2>&1 && echo g)sed
 SORT       := $(shell gsort --help >/dev/null 2>&1 && echo g)sort
@@ -69,6 +70,7 @@ REQUIREMENTS := \
     $(PATCH) \
     perl \
     $(PYTHON) \
+    $(PYTHON3) \
     ruby \
     $(SED) \
     $(SORT) \
@@ -131,6 +133,21 @@ MXE_CONFIGURE_OPTS = \
         --enable-static --disable-shared , \
         --disable-static --enable-shared ) \
     $(MXE_DISABLE_DOC_OPTS)
+
+MXE_MESON_WRAPPER = '$(PREFIX)/bin/$(TARGET)-meson'
+MXE_MESON_NATIVE_WRAPPER = '$(PREFIX)/bin/mxe-native-meson'
+MXE_NINJA = '$(PREFIX)/$(BUILD)/bin/ninja'
+
+# Please edit meson wrapper and/or target file instead of this,
+# unless your changes only apply to building MXE's packages
+MXE_MESON_OPTS = \
+    --buildtype=release \
+    $(if $(findstring mxe,$(MXE_USE_CCACHE)), \
+    --cross-file='$(PREFIX)/$(TARGET)/share/meson/mxe-crossfile-internal.meson')
+
+PKG_MESON_OPTS = \
+    $(_$(PKG)_MESON_OPTS) \
+    $($(PKG)_MESON_OPTS)
 
 PKG_CONFIGURE_OPTS = \
     $(_$(PKG)_CONFIGURE_OPTS) \
@@ -388,11 +405,11 @@ else
         echo; \
         echo '# This variable controls the targets that will build.'; \
         echo '#MXE_TARGETS := $(MXE_TARGET_LIST)'; \
-        echo 'MXE_TARGETS := $(MXE_TARGETS)'; \
         echo; \
         echo '# This variable controls which plugins are in use.'; \
         echo '# See plugins/README.md for further information.'; \
         echo '#override MXE_PLUGIN_DIRS += plugins/apps plugins/native'; \
+        echo; \
         echo 'override MXE_PLUGIN_DIRS += plugins/gcc10'; \
         echo; \
         echo '# This variable controls the download mirror for SourceForge,'; \
@@ -401,7 +418,7 @@ else
         echo; \
         echo '# The three lines below makes `make` build these "local'; \
         echo '# packages" instead of all packages.'; \
-        echo 'LOCAL_PKG_LIST := biosig sigviewer stimfit dcmtk edfbrowser'; \
+        echo 'LOCAL_PKG_LIST := biosig stimfit sigviewer edfbrowser nsis curl pexports gtk3'; \
         echo '#.DEFAULT_GOAL  := local-pkg-list'; \
         echo 'local-pkg-list: $$(LOCAL_PKG_LIST)'; \
     } >'$(PWD)/settings.mk')
@@ -722,7 +739,7 @@ else
     NONET_LIB := $(PREFIX)/$(BUILD)/lib/nonetwork.dylib
     PRELOAD   := DYLD_FORCE_FLAT_NAMESPACE=1 DYLD_INSERT_LIBRARIES='$(NONET_LIB)' \
                  http_proxy=$(DUMMY_PROXY) https_proxy=$(DUMMY_PROXY)
-    NONET_CFLAGS := -arch x86_64
+    NONET_CFLAGS := -arch $(shell uname -m)
 endif
 
 $(NONET_LIB): $(TOP_DIR)/tools/nonetwork.c | $(PREFIX)/$(BUILD)/lib/.gitkeep
@@ -774,25 +791,25 @@ $(PREFIX)/$(3)/installed/$(1): $(PKG_MAKEFILES) \
 	    $(else),
 	        @$(PRINTF_FMT) '[build]'    '$(1)' '$(3)' | $(RTRIM)
 	        @[ -d '$(LOG_DIR)/$(TIMESTAMP)' ] || mkdir -p '$(LOG_DIR)/$(TIMESTAMP)'
-	@touch '$(LOG_DIR)/$(TIMESTAMP)/$(1)_$(3)'
-	@ln -sf '$(TIMESTAMP)/$(1)_$(3)' '$(LOG_DIR)/$(1)_$(3)'
+	        @touch '$(LOG_DIR)/$(TIMESTAMP)/$(1)_$(3)'
+	        @ln -sf '$(TIMESTAMP)/$(1)_$(3)' '$(LOG_DIR)/$(1)_$(3)'
 	        @if ! (time $(PRELOAD) WINEPREFIX='$(2)/readonly' \
 	               $(MAKE) -f '$(MAKEFILE)' \
 	                   'build-only-$(1)_$(3)' \
 	                   WGET=false \
 	               ) &> '$(LOG_DIR)/$(TIMESTAMP)/$(1)_$(3)'; then \
-	    echo; \
-	    echo 'Failed to build package $(1) for target $(3)!'; \
-	    echo '------------------------------------------------------------'; \
-	    $(if $(findstring undefined, $(origin MXE_VERBOSE)),\
-	        tail -n 10 '$(LOG_DIR)/$(1)_$(3)' | $(SED) -n '/./p';, \
-	        $(SED) -n '/./p' '$(LOG_DIR)/$(1)_$(3)';) \
-	    echo '------------------------------------------------------------'; \
-	    echo '[log]      $(LOG_DIR)/$(1)_$(3)'; \
-	    echo; \
-	    exit 1; \
-	fi
-	    @$(PRINTF_FMT) '[done]' '$(1)' '$(3)' "`grep -a '^du:.*KiB$$\' '$(LOG_DIR)/$(TIMESTAMP)/$(1)_$(3)' | cut -d ':' -f2 | tail -1`" \
+	            echo; \
+	            echo 'Failed to build package $(1) for target $(3)!'; \
+	            echo '------------------------------------------------------------'; \
+	            $(if $(findstring undefined, $(origin MXE_VERBOSE)),\
+	                tail -n 10 '$(LOG_DIR)/$(1)_$(3)' | $(SED) -n '/./p';, \
+	                $(SED) -n '/./p' '$(LOG_DIR)/$(1)_$(3)';) \
+	            echo '------------------------------------------------------------'; \
+	            echo '[log]      $(LOG_DIR)/$(1)_$(3)'; \
+	            echo; \
+	            exit 1; \
+	        fi
+	        @$(PRINTF_FMT) '[done]' '$(1)' '$(3)' "`grep -a '^du:.*KiB$$\' '$(LOG_DIR)/$(TIMESTAMP)/$(1)_$(3)' | cut -d ':' -f2 | tail -1`" \
 	                                          "`grep -a '^real.*m.*s$$\' '$(LOG_DIR)/$(TIMESTAMP)/$(1)_$(3)' | tr '\t' ' ' | cut -d ' ' -f2 | tail -1`"
 	    )
 	$(else),
@@ -880,9 +897,9 @@ WALK_UPSTREAM = \
         $(foreach PKG,$(filter $(1),$(PKGS)),\
           $(foreach TARGET,$($(PKG)_TARGETS), \
             $(foreach DEP,$(sort $(subst $(BUILD)~,,$(subst $(TARGET)~,,$(PKG_ALL_DEPS)))),\
-                    $(if $(filter-out $(PKGS_VISITED),$(DEP)),\
-                        $(call SET_APPEND,PKGS_VISITED,$(DEP))\
-                        $(call WALK_UPSTREAM,$(DEP))\
+              $(if $(filter-out $(PKGS_VISITED),$(DEP)),\
+                  $(call SET_APPEND,PKGS_VISITED,$(DEP))\
+                  $(call WALK_UPSTREAM,$(DEP))\
                   $(DEP))))))
 
 # not really walking downstream - that seems to be quadratic, so take
@@ -973,7 +990,7 @@ print-deps-for-build-pkg:
 	            $(info $(strip for-build-pkg $(TARGET)~$(PKG) \
 	            $(subst $(space),-,$($(PKG)_VERSION)-$(OS_SHORT_NAME)) \
 	            $(subst /installed/,~,$(PKG_DEPS) $(PKG_OO_DEPS)))))))
-	        @echo -n
+	            @echo -n
 
 BUILD_PKG_TMP_FILES := *-*.list mxe-*.tar.xz mxe-*.deb* wheezy jessie
 
@@ -1079,10 +1096,10 @@ docs/build-matrix.html: $(foreach 1,$(PKGS),$(PKG_MAKEFILES))
 #     $(eval $(VIRTUAL_PKGCOUNT += x))
 # vs
 #     $(eval $(VIRTUAL_PKGCOUNT := $(call int_inc,$(VIRTUAL_PKGCOUNT))))
-	@$(foreach PKG,$(PKGS),                      \
-	    $(eval $(PKG)_VIRTUAL := $(true))        \
-	    $(eval $(PKG)_BUILD_ONLY := $(true))     \
-	    echo -e '<tr>\n                          \
+	@$(foreach PKG,$(PKGS), \
+	    $(eval $(PKG)_VIRTUAL := $(true)) \
+	    $(eval $(PKG)_BUILD_ONLY := $(true)) \
+	    echo -e '<tr>\n \
 	        <th class="row" \
 	            title="$($(PKG)_MESSAGE)"> \
 	            $(PKG) \
@@ -1091,15 +1108,15 @@ docs/build-matrix.html: $(foreach 1,$(PKGS),$(PKG_MAKEFILES))
 	        </th>\n \
 	        <td>$(call substr,$($(PKG)_VERSION),1,12) \
 	            $(if $(call gt,$(call strlen,$($(PKG)_VERSION)),12),&hellip;)</td>\n\
-	    $(foreach TARGET,$(MXE_TARGET_LIST),     \
+	    $(foreach TARGET,$(MXE_TARGET_LIST), \
 	        $(if $(filter $(VIRTUAL_PKG_TYPES),$($(PKG)_TYPE)), \
 	            $(if $(filter $(TARGET),$($(PKG)_TARGETS)), \
 	                <td class="neutral">&bull;</td>, \
 	                <td></td>), \
 	            $(if $(filter $(TARGET),$($(PKG)_TARGETS)), \
-	        $(if $(value $(call LOOKUP_PKG_RULE,$(PKG),BUILD,$(TARGET))), \
-	            $(eval $(TARGET)_PKGCOUNT += x) \
-	            <td class="supported">&#x2713;</td>,            \
+	                $(if $(value $(call LOOKUP_PKG_RULE,$(PKG),BUILD,$(TARGET))), \
+	                    $(eval $(TARGET)_PKGCOUNT += x) \
+	                    <td class="supported">&#x2713;</td>, \
 	                    <td class="unsupported">&#215;</td>),\
 	                	<td></td>))\n) \
 	    $(if $(filter $(VIRTUAL_PKG_TYPES),$($(PKG)_TYPE)), \
@@ -1109,10 +1126,10 @@ docs/build-matrix.html: $(foreach 1,$(PKGS),$(PKG_MAKEFILES))
 	            <td></td>), \
 	        $(if $(filter $(BUILD),$($(PKG)_TARGETS)), \
 	            $(if $(value $(call LOOKUP_PKG_RULE,$(PKG),BUILD,$(BUILD))), \
-	        <td class="supported">&#x2713;</td>, \
+	                <td class="supported">&#x2713;</td>, \
 	                <td class="unsupported">&#215;</td>), \
 	                <td></td>))\n \
-	        </tr>\n' >> $@ $(newline)            \
+	        </tr>\n' >> $@ $(newline) \
 	    $(if $(call seq,$(BUILD),$($(PKG)_TARGETS)), \
 	        $(eval BUILD_ONLY_PKGCOUNT += x)))
 	@echo '<tr>'                            >> $@
