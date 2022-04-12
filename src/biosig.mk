@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 3a7cdc0f003f28de2572984db865808039a52a943c587cfb5a87679548864
 $(PKG)_SUBDIR   := biosig-$($(PKG)_VERSION)
 $(PKG)_FILE     := biosig-$($(PKG)_VERSION).src.tar.gz
 $(PKG)_URL      := https://sourceforge.net/projects/biosig/files/BioSig%20for%20C_C%2B%2B/src/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc suitesparse zlib libiconv libb64 lapack dcmtk tinyxml
+$(PKG)_DEPS     := cc             zlib libiconv libb64              tinyxml suitesparse dcmtk
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://biosig.sourceforge.io/download.html' | \
@@ -72,7 +72,7 @@ define $(PKG)_BUILD_POST
 		include/biosig.h include/biosig-dev.h include/biosig2.h include/gdftime.h  \
 		lib/libbiosig.a lib/libbiosig.def bin/libbiosig.dll lib/libbiosig.dll.a \
 		lib/libgdf.a lib/libgdf.def bin/libgdf.dll lib/libgdf.dll.a \
-		lib/libz.a lib/libcholmod.a lib/liblapack.a lib/libiconv.a \
+		lib/libz.a lib/libcholmod.a lib/libiconv.a \
 		include/iconv.h \
 		include/physicalunits.h \
 		lib/libphysicalunits.a lib/libphysicalunits.def bin/libphysicalunits.dll lib/libphysicalunits.dll.a
@@ -88,7 +88,7 @@ define $(PKG)_BUILD_POST
     cd $(PREFIX)/$(TARGET) && cp -r \
 		lib/libbiosig.a lib/libbiosig.def bin/libbiosig.dll \
 		lib/libgdf.a lib/libgdf.def bin/libgdf.dll \
-		lib/libz.a lib/libcholmod.a lib/liblapack.a lib/libiconv.a \
+		lib/libz.a lib/libcholmod.a lib/libiconv.a \
 		lib/libphysicalunits.a lib/libphysicalunits.def bin/libphysicalunits.dll \
 		$(PREFIX)/release/$(TARGET)/lib/
     -cd $(PREFIX)/$(TARGET) && cp -r \

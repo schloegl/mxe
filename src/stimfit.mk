@@ -9,7 +9,7 @@ $(PKG)_SUBDIR   := stimfit-$($(PKG)_VERSION)debian
 $(PKG)_FILE     := stimfit-$($(PKG)_VERSION)debian.tar.gz
 $(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/v0.16.0debian.tar.gz
 # https://github.com/neurodroid/$(PKG)/archive/v$($(PKG)_VERSION)windows.tar.gz
-$(PKG)_DEPS     := cc biosig wxwidgets hdf5 fftw levmar openblas
+$(PKG)_DEPS     := cc biosig wxwidgets hdf5 fftw levmar lapack
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
