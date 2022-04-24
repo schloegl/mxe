@@ -66,6 +66,7 @@ REQUIREMENTS := \
     $(LIBTOOLIZE) \
     lzip \
     $(MAKE) \
+    mako-render \
     $(OPENSSL) \
     $(PATCH) \
     perl \
@@ -78,7 +79,8 @@ REQUIREMENTS := \
     wget \
     xz
 
-PREFIX     := $(PWD)/usr
+MXE_PREFIX := $(PWD)/usr
+PREFIX     := $(MXE_PREFIX)
 LOG_DIR    := $(PWD)/log
 GITS_DIR   := $(PWD)/gits
 GIT_HEAD   := $(shell git rev-parse HEAD)
@@ -97,6 +99,7 @@ STRIP_EXE       := $(true)
 MXE_USE_CCACHE      := mxe
 MXE_CCACHE_DIR      := $(PWD)/.ccache
 MXE_CCACHE_BASE_DIR := $(PWD)
+MXE_CCACHE_CACHE_DIR := $(MXE_CCACHE_DIR)/ccache
 
 # set to major.minor for LTS
 # MXE_QT6_ID := qt6.2

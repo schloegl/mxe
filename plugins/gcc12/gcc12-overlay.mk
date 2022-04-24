@@ -17,9 +17,9 @@ $(PKG)_URL      := https://libisl.sourceforge.io/$($(PKG)_FILE)
 $(PKG)_URL_2    := https://gcc.gnu.org/pub/gcc/infrastructure/$($(PKG)_FILE)
 
 PKG             := gcc
-$(PKG)_VERSION  := 12-20220327
+$(PKG)_VERSION  := 12-20220417
 $(PKG)_RELEASE  := 12.0.1
-$(PKG)_CHECKSUM := 1d9f8b8f7f3521300aaff34ab8a3cff0fe8c45c4ae659b08af5b077d5e4ceb3e
+$(PKG)_CHECKSUM := 3725ae2f5d3bf6f6e2bcc1360302390d5f46e5aaecc9070d5038774d06238d60
 $(PKG)_SUBDIR   := gcc-$($(PKG)_VERSION)
 $(PKG)_FILE     := gcc-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/gcc/gcc-$($(PKG)_VERSION)/$($(PKG)_FILE)
