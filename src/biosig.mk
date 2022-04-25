@@ -4,10 +4,10 @@
 PKG             := biosig
 $(PKG)_WEBSITE  := http://biosig.sf.net/
 $(PKG)_DESCR    := biosig
-$(PKG)_VERSION  := 2.4.0
-$(PKG)_CHECKSUM := 3a7cdc0f003f28de2572984db865808039a52a943c587cfb5a87679548864365
+$(PKG)_VERSION  := 2.4.1
+$(PKG)_CHECKSUM := f7426d3fd238df1c54071ca59a14c3f4f92839fe1a54cdcfed9f32598ec98080
 $(PKG)_SUBDIR   := biosig-$($(PKG)_VERSION)
-$(PKG)_FILE     := biosig-$($(PKG)_VERSION).src.tar.gz
+$(PKG)_FILE     := biosig-$($(PKG)_VERSION).src.tar.xz
 $(PKG)_URL      := https://sourceforge.net/projects/biosig/files/BioSig%20for%20C_C%2B%2B/src/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc             zlib libiconv libb64              tinyxml suitesparse dcmtk
 
