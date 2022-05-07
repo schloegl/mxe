@@ -3,8 +3,8 @@
 PKG             := openssl
 $(PKG)_WEBSITE  := https://www.openssl.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.0.2
-$(PKG)_CHECKSUM := 98e91ccead4d4756ae3c9cde5e09191a8e586d9f4d50838e7ec09d6411dfdb63
+$(PKG)_VERSION  := 3.0.3
+$(PKG)_CHECKSUM := ee0078adcef1de5f003c62c80cc96527721609c6f3bb42b7795df31f8b558c0b
 $(PKG)_SUBDIR   := openssl-$($(PKG)_VERSION)
 $(PKG)_FILE     := openssl-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.openssl.org/source/$($(PKG)_FILE)
@@ -17,6 +17,14 @@ define $(PKG)_UPDATE
     $(SORT) -V | \
     tail -1
 endef
+
+$(PKG)_MAKE = $(MAKE) -C '$(1)' -j '$(JOBS)'\
+        CC='$(TARGET)-gcc' \
+        RANLIB='$(TARGET)-ranlib' \
+        AR='$(TARGET)-ar' \
+        RC='$(TARGET)-windres' \
+        CROSS_COMPILE='$(TARGET)-' \
+        $(if $(BUILD_SHARED), ENGINESDIR='$(PREFIX)/$(TARGET)/bin/engines')
 
 define $(PKG)_BUILD
     # remove previous install
@@ -32,13 +40,8 @@ define $(PKG)_BUILD
         no-capieng \
         --prefix='$(PREFIX)/$(TARGET)' \
         --libdir='$(PREFIX)/$(TARGET)/lib'
-    $(MAKE) -C '$(1)' build_sw install_sw -j 1 \
-        CC='$(TARGET)-gcc' \
-        RANLIB='$(TARGET)-ranlib' \
-        AR='$(TARGET)-ar' \
-        RC='$(TARGET)-windres' \
-        CROSS_COMPILE='$(TARGET)-' \
-        $(if $(BUILD_SHARED), ENGINESDIR='$(PREFIX)/$(TARGET)/bin/engines')
+    $($(PKG)_MAKE) build_sw
+    $($(PKG)_MAKE) install_sw
 endef
 
 $(PKG)_BUILD_i686-w64-mingw32   = $(subst @openssl-target@,mingw,$($(PKG)_BUILD))
