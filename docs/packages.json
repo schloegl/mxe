@@ -60,7 +60,7 @@
     "edfbrowser": {"version": "1.92", "website": "https://www.teuniz.net/edfbrowser/", "description": "EDFbrowser"},
     "eigen": {"version": "3.4.0", "website": "https://eigen.tuxfamily.org/", "description": ""},
     "exiv2": {"version": "0.27.5", "website": "https://www.exiv2.org/", "description": "Exiv2"},
-    "expat": {"version": "2.4.8", "website": "https://github.com/libexpat/libexpat", "description": "Expat XML Parser"},
+    "expat": {"version": "2.4.9", "website": "https://github.com/libexpat/libexpat", "description": "Expat XML Parser"},
     "faad2": {"version": "2.8.8", "website": "https://www.audiocoding.com/", "description": ""},
     "fdk-aac": {"version": "2.0.0", "website": "https://github.com/mstorsjo/fdk-aac", "description": "FDK-AAC"},
     "ffmpeg": {"version": "4.2.3", "website": "https://ffmpeg.org/", "description": ""},
