@@ -12,8 +12,8 @@ $(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/refs/tags/v$($(
 $(PKG)_DEPS     := gcc biosig wxwidgets hdf5 boost fftw
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
-    $(SED) -n 's_.*<a href="/neurodroid/stimfit/archive/\([0-9\.]*\)windows.tar.gz" rel="nofollow">.*_\1_ip' \
+    $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/tags' | \
+    $(SED) -n 's_.*<a href="/neurodroid/stimfit/tags/\(0.[0-9\.]*\.*).tar.gz" rel="nofollow">.*_\1_ip' \
     head -1
 endef
 
