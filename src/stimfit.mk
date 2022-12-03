@@ -3,17 +3,17 @@
 
 PKG             := stimfit
 $(PKG)_IGNORE   := 
-$(PKG)_VERSION  := 0.16.0
-$(PKG)_CHECKSUM := 17e014e555fcafc6ce08fc72bcceb1786b367e0c447e847c0e72e99845fc503c
-$(PKG)_SUBDIR   := stimfit-$($(PKG)_VERSION)debian
-$(PKG)_FILE     := stimfit-$($(PKG)_VERSION)debian.tar.gz
-$(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/v0.16.0debian.tar.gz
-# https://github.com/neurodroid/$(PKG)/archive/v$($(PKG)_VERSION)windows.tar.gz
+$(PKG)_VERSION  := 0.16.2macports
+$(PKG)_CHECKSUM := 0c58f51e20c4253dee66be6cf0249ece4c806aa7dc3ae0934f6f3693c43577e7
+# bdce39a7f6fb5305152c8907363b10d458d258046bc02d1b7b4b2e998e1eaaf7
+$(PKG)_SUBDIR   := stimfit-$($(PKG)_VERSION)
+$(PKG)_FILE     := stimfit-$($(PKG)_VERSION).tar.gz
+$(PKG)_URL      := https://github.com/neurodroid/stimfit/archive/refs/tags/v$(PKG)_VERSION).tar.gz
 $(PKG)_DEPS     := cc biosig wxwidgets hdf5 fftw levmar lapack
 
 define $(PKG)_UPDATE
-    $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/releases' | \
-    $(SED) -n 's_.*<a href="/neurodroid/stimfit/archive/\([0-9\.]*\)windows.tar.gz" rel="nofollow">.*_\1_ip' \
+    $(WGET) -q -O- 'https://github.com/neurodroid/stimfit/tags' | \
+    $(SED) -n 's_.*<a href="/neurodroid/stimfit/tags/\(0.[0-9\.]*\.*).tar.gz" rel="nofollow">.*_\1_ip' \
     head -1
 endef
 
