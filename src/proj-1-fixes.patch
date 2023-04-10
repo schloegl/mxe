@@ -1,0 +1,24 @@
+This file is part of MXE. See LICENSE.md for licensing information.
+
+Contains ad hoc patches for cross building.
+
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: brodieG <brodieG@users.noreply.github.com>
+Date: Sat, 21 Jan 2023 13:25:31 +0000
+Subject: [PATCH 1/1] add dependencies via pc file
+
+
+diff --git a/proj.pc.in b/proj.pc.in
+index 1111111..2222222 100644
+--- a/proj.pc.in
++++ b/proj.pc.in
+@@ -8,7 +8,8 @@ datadir=@datadir@/@PACKAGE@
+ Name: PROJ
+ Description: Coordinate transformation software library
+ Requires:
++Requires.private: sqlite3 libtiff-4 libcurl
+ Version: @VERSION@
+ Libs: -L${libdir} -lproj
+-Libs.private: @EXTRA_LIBS@
++Libs.private: -lstdc++
+ Cflags: -I${includedir}
