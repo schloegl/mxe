@@ -423,7 +423,7 @@ else
         echo; \
         echo '# The three lines below makes `make` build these "local'; \
         echo '# packages" instead of all packages.'; \
-        echo 'LOCAL_PKG_LIST := biosig stimfit sigviewer edfbrowser nsis curl pexports gtk3'; \
+        echo 'LOCAL_PKG_LIST := biosig stimfit sigviewer edfbrowser sqlite nsis curl pexports netcdf gtk3 gtk2 fltk glm glpk gdal openal llvm qt6 wt openscenegraph"; \
         echo '#.DEFAULT_GOAL  := local-pkg-list'; \
         echo 'local-pkg-list: $$(LOCAL_PKG_LIST)'; \
     } >'$(PWD)/settings.mk')
