@@ -10,10 +10,10 @@
 MXE (M cross environment) is a GNU Makefile that compiles a cross
 compiler and cross compiles many free libraries. This repository is derived from
 [MXE](https://github.com/mxe/mxe), and extended for compiling the following tools:
- - [libiosig/biosig-tools](http://biosig.sourceforge.net/)
+ - [libbiosig/biosig-tools](http://biosig.sourceforge.net/)
  - [sigviewer](https://github.com/cbrnr/sigviewer)
  - [stimfit](https://github.com/neurodroid/stimfit)-lite (without python)
- - [edfbrowswer](https://www.teuniz.net/edfbrowser/)
+ - [edfbrowser](https://www.teuniz.net/edfbrowser/)
 It compiles also required prerequisites, and many other packages.
 
 ## Supported Toolchains
