@@ -53,8 +53,3 @@ define $(PKG)_BUILD
         '$(SOURCE_DIR)/samples/cpp/fback.cpp' -o '$(PREFIX)/$(TARGET)/bin/test-opencv.exe' \
         `'$(TARGET)-pkg-config' opencv4 libavcodec libavformat libswscale --cflags --libs` -lwebp
 endef
-
-# float.h issues https://bugzilla.redhat.com/show_bug.cgi?id=843436
-$(PKG)_BUILD_x86_64-w64-mingw32 =
-$(PKG)_BUILD_i686-w64-mingw32 =
-
