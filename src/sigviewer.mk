@@ -3,11 +3,11 @@
 
 PKG             := sigviewer
 $(PKG)_IGNORE   := 
-$(PKG)_VERSION  := 0.6.4
-$(PKG)_CHECKSUM := e64516b0d5a2ac65b1ef496a6666cdac8919b67eecd8d5eb6b7cbf2493314367
-$(PKG)_SUBDIR   := sigviewer-$($(PKG)_VERSION)
+$(PKG)_VERSION  := 0.6.5
+$(PKG)_CHECKSUM := 452b36a5ec0eb56438f295454969f558917786afaa21100203584021ce145ca4
+$(PKG)_SUBDIR   := sigviewer-v$($(PKG)_VERSION)
 $(PKG)_FILE     := $($(PKG)_SUBDIR).tar.gz
-$(PKG)_URL      := https://github.com/cbrnr/$(PKG)/archive/v$($(PKG)_VERSION).tar.gz
+$(PKG)_URL      := https://git.ista.ac.at/alois.schloegl/sigviewer/-/archive/v$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_QT_DIR   := qt5
 $(PKG)_DEPS     := biosig libxdf qtbase
 
