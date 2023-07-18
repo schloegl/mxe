@@ -4,8 +4,8 @@
 PKG             := biosig
 $(PKG)_WEBSITE  := http://biosig.sf.net/
 $(PKG)_DESCR    := biosig
-$(PKG)_VERSION  := 2.5.1
-$(PKG)_CHECKSUM := 4b939aac113efcdf68060d0d39d3eb9228e8f6a4304a319b7fc3ccaff4dcbb66
+$(PKG)_VERSION  := 2.5.2
+$(PKG)_CHECKSUM := 3c87fa4ae6d69e1a75477f85451b6f16480418a0018d59e1586a2e3e8954ec47
 $(PKG)_SUBDIR   := biosig-$($(PKG)_VERSION)
 $(PKG)_FILE     := biosig-$($(PKG)_VERSION).src.tar.xz
 $(PKG)_URL      := https://downloads.sourceforge.net/project/biosig/BioSig%20for%20C_C%2B%2B/src/$($(PKG)_FILE)
@@ -18,8 +18,6 @@ define $(PKG)_UPDATE
 endef
 
 define $(PKG)_BUILD_PRE
-
-    cd '$(1)' && autoreconf -fi
 
     cd '$(1)' && ./configure \
         ac_cv_func_malloc_0_nonnull=yes \
