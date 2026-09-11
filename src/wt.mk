@@ -4,8 +4,8 @@ PKG             := wt
 $(PKG)_WEBSITE  := https://www.webtoolkit.eu/
 $(PKG)_DESCR    := Wt
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.14.2
-$(PKG)_CHECKSUM := 38d229ad0f4e0fae9c1a99b2282cf5614b3627bae08a4674cff7ab014e2b559b
+$(PKG)_VERSION  := 4.14.3
+$(PKG)_CHECKSUM := 08ee816e28ad7cc9994c9199f4964ffda683ce20dc02a60ac20b3d4a39afc4e2
 $(PKG)_GH_CONF  := emweb/wt/tags
 $(PKG)_DEPS     := cc boost graphicsmagick libharu openssl pango postgresql sqlite
 
